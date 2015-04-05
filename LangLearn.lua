@@ -4,7 +4,7 @@
 --]]
 array = {}
 function descriptor()
-    return { title = "LangLearn" ;
+    return { title = "LangLearn S" ;
              version = "0.1" ;
              author = "Luiz" ;
              capabilities = {} }
