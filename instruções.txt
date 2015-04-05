@@ -1,0 +1,9 @@
+1 - pegar as duas legendas e sincronizar com o SubtitlesSynchSetup
+2 - unir as duas, em http://pas-bien.net/2srt2ass/ (colocar a original, closed caption, em baixo)
+3 - colocar o LangLearn.lua na pasta $VLC_HOME/lua/extensions
+4 - carregar a extensao e ver o filme no VLC apertando o 0 (tecla 0) quando quiser marcar
+5 - a lista vai ser gerada em Documentos\lista.txt
+6 - carregar a lista no script do R, bem como o arquivo da legenda combinado (setar os diretorios)
+7 - gerar o listaAnki.txt e os arquivos de mídia
+8 - colocar em %USERPROFILE%/anki/media (nao me lembro se é midia)
+9 - carregar o listaAnki.txt
