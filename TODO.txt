@@ -1,0 +1,3 @@
+diretorios por parametro
+batch pra unir tudo isso
+R pra exe?
