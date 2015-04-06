@@ -1,13 +1,20 @@
 library(lubridate)
+###########################################################
+# VARIAVEIS A SEREM ALTERADAS DE ACORDO COM O AMBIENTE
+###########################################################
 ffmpeg = "J:/downloads/legendas/ffmpeg-20150402-git-d759844-win64-static/bin/ffmpeg.exe"
 arquivoOrigem = "e:/S02E07 A Man Without Honor.mp4"
 diretorioSaida = "e:/"
-setwd("C:/Users/hu/Dropbox/diversos/legendas/GoT/")
-setwd("J:/dropbox/Dropbox/diversos/legendas/GoT")
-legenda = read.fwf ("Game.of.Thrones.S02E07.720p.BluRay.x264.MIKY.Everything.ass", 
+pastaLegendaELista = "C:/Users/hu/Dropbox/diversos/legendas/GoT/"
+pastaLegendaELista = "J:/dropbox/Dropbox/diversos/legendas/GoT"
+arquivoLegenda = "Game.of.Thrones.S02E07.720p.BluRay.x264.MIKY.Everything.ass"
+###########################################################
+
+setwd(pastaLegendaELista)
+legenda = read.fwf (arquivoLegenda
                     widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18)
 
-head(legenda)
+#head(legenda)
 legenda$V11 = substr(legenda$V2, 1,11); legenda$V12 = substr(legenda$V3, 1,11); 
 legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
 legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
