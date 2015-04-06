@@ -12,14 +12,16 @@ legenda$V11 = substr(legenda$V2, 1,11); legenda$V12 = substr(legenda$V3, 1,11);
 legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
 legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
 legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
-substr(legenda$V11, 1,11)
+legenda$V10 = gsub("\n"," ",legenda$V10); legenda$V10 = gsub("\\N"," ",legenda$V10)
+legenda$V10 = gsub("\\\\","",legenda$V10)
+
 
 localizarIntervalo <- function (tempo) {
   if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
   legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo),c(2,3,4,10,11,12)]
 }
 
-lista = read.table("lista.txt", header = F) # arquivo que contém os pontos marcados pelo VLC
+lista = read.table("lista.txt", header = F) # arquivo que cont?m os pontos marcados pelo VLC
 lista = lapply (lista, lubridate::seconds)
 lista = lapply(lista[[1]], localizarIntervalo)
 
@@ -28,6 +30,23 @@ inserirParametros <- function (tempoInicial, tempoFinal, arquivoDestino){
           ffmpeg, arquivoOrigem, tempoInicial, ifelse(tempoFinal <= 2, 2, tempoFinal), arquivoDestino)
 }
 
+horaInicialMenor <- function(itemLista){
+  if (nrow(itemLista) == 1)
+    return (itemLista$V11)
+  else
+    return(ifelse (itemLista$V2[1] > itemLista$V2[2], itemLista$V11[2], 
+                   itemLista$V11[1] ))
+}
+
+tempoAAdicionar <- function(itemLista){
+  if (nrow(itemLista) == 1) return (as.numeric(hms(itemLista$V12) - hms(itemLista$V11)))
+  else{
+    maior = ifelse (itemLista$V3[1] > itemLista$V3[2], itemLista$V12[1], itemLista$V12[2])
+    return(as.numeric(hms(maior)) -  as.numeric(hms(horaInicialMenor(itemLista))))
+  }
+}
+tempoAAdicionar(lista[[19]])
+
 listaAnki = matrix(ncol = 3)
 for (i in 1:length(lista)){
   if (nrow(lista[[i]]) == 0) next;
@@ -35,7 +54,7 @@ for (i in 1:length(lista)){
   arquivoSaida = sprintf ("saida-%i.mp4", i)
   saida = sprintf ("%s%s", diretorioSaida, arquivoSaida)
   campoAnkiArquivo = sprintf("[sound:%s]", arquivoSaida)
-  system(inserirParametros(x$V11[1], max(as.numeric(x$V3 - x$V2)) + 1.2, saida))
+  system(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x) + 1.2, saida))
   if (nrow(lista[[i]]) == 1) 
     linha = c(as.character(x$V10), as.character(x$V10), campoAnkiArquivo)
   else
