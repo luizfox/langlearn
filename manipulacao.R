@@ -8,9 +8,12 @@ diretorioSaida = "e:/"
 pastaLegendaELista = "C:/Users/hu/Dropbox/diversos/legendas/GoT/"
 pastaLegendaELista = "J:/dropbox/Dropbox/diversos/legendas/GoT"
 arquivoLegenda = "Game.of.Thrones.S02E07.720p.BluRay.x264.MIKY.Everything.ass"
+modoDev = T
+audioOnly = T
 ###########################################################
 
-extensao = substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem))
+extensao = ifelse(audioOnly, "mp3",
+                substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem)))
 setwd(pastaLegendaELista)
 legenda = read.fwf (arquivoLegenda,
                     widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18)
@@ -34,7 +37,11 @@ lista = lapply (lista, lubridate::seconds)
 lista = lapply(lista[[1]], localizarIntervalo)
 
 inserirParametros <- function (tempoInicial, tempoFinal, arquivoDestino){
-  sprintf("\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s", 
+  if (audioOnly)
+    strffmpeg = "\"%s\" -i \"%s\" -ab 320k -ac 2 -ar 44100 -vn -ss %s -t %f %s"
+  else
+    strffmpeg = "\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s"
+  sprintf(strffmpeg,
           ffmpeg, arquivoOrigem, tempoInicial, ifelse(tempoFinal <= 2, 2, tempoFinal), 
           arquivoDestino)
           #substr(arquivoDestino, 1, nchar(arquivoOrigem) -4), extensao)
@@ -52,10 +59,11 @@ horaInicialMenor <- function(itemLista){
 }
 
 tempoAAdicionar <- function(itemLista){
-  if (nrow(itemLista) == 1) return (as.numeric(hms(itemLista$V12) - hms(itemLista$V11)))
+  if (nrow(itemLista) == 1) return (as.numeric(hms(itemLista$V12) - 
+                                                 hms(itemLista$V11)) + 1.2)
   else{
     maior = ifelse (itemLista$V3[1] > itemLista$V3[2], itemLista$V12[1], itemLista$V12[2])
-    return(as.numeric(hms(maior)) -  as.numeric(hms(horaInicialMenor(itemLista))))
+    return(as.numeric(hms(maior)) -  as.numeric(hms(horaInicialMenor(itemLista))) +1.2)
   }
 }
 
@@ -66,7 +74,11 @@ for (i in 1:length(lista)){
   arquivoSaida = sprintf ("saida-%i.%s", i, extensao)
   saida = sprintf ("%s%s", diretorioSaida, arquivoSaida)
   campoAnkiArquivo = sprintf("[sound:%s]", arquivoSaida)
-  print(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x) + 1.2, saida))
+  if (modoDev)
+    print(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
+  else
+    system(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
+  
   if (nrow(lista[[i]]) == 1) 
     linha = c(as.character(x$V10), as.character(x$V10), campoAnkiArquivo)
   else
