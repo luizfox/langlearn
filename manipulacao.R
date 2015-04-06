@@ -10,8 +10,9 @@ pastaLegendaELista = "J:/dropbox/Dropbox/diversos/legendas/GoT"
 arquivoLegenda = "Game.of.Thrones.S02E07.720p.BluRay.x264.MIKY.Everything.ass"
 ###########################################################
 
+extensao = substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem))
 setwd(pastaLegendaELista)
-legenda = read.fwf (arquivoLegenda
+legenda = read.fwf (arquivoLegenda,
                     widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18)
 
 #head(legenda)
@@ -33,8 +34,12 @@ lista = lapply (lista, lubridate::seconds)
 lista = lapply(lista[[1]], localizarIntervalo)
 
 inserirParametros <- function (tempoInicial, tempoFinal, arquivoDestino){
-  sprintf("\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s", 
-          ffmpeg, arquivoOrigem, tempoInicial, ifelse(tempoFinal <= 2, 2, tempoFinal), arquivoDestino)
+  sprintf("\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s.%s", 
+          ffmpeg, arquivoOrigem, tempoInicial, ifelse(tempoFinal <= 2, 2, tempoFinal), 
+          substr(arquivoDestino, 1, nchar(arquivoOrigem) -4), extensao)
+  #alternativas pra MKV:
+  #ffmpeg -i output3.mkv -t 00:04:20 -c:v copy -c:a copy output-cut.mkv
+  #ffmpeg -i output3.mkv -t 00:04:20 -c:v libx264 -c:a libfaac output-cut.mkv (sync prob)
 }
 
 horaInicialMenor <- function(itemLista){
@@ -52,16 +57,15 @@ tempoAAdicionar <- function(itemLista){
     return(as.numeric(hms(maior)) -  as.numeric(hms(horaInicialMenor(itemLista))))
   }
 }
-tempoAAdicionar(lista[[19]])
 
 listaAnki = matrix(ncol = 3)
 for (i in 1:length(lista)){
   if (nrow(lista[[i]]) == 0) next;
   x = lista[[i]]
-  arquivoSaida = sprintf ("saida-%i.mp4", i)
+  arquivoSaida = sprintf ("saida-%i.%s", i, extensao)
   saida = sprintf ("%s%s", diretorioSaida, arquivoSaida)
   campoAnkiArquivo = sprintf("[sound:%s]", arquivoSaida)
-  system(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x) + 1.2, saida))
+  print(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x) + 1.2, saida))
   if (nrow(lista[[i]]) == 1) 
     linha = c(as.character(x$V10), as.character(x$V10), campoAnkiArquivo)
   else
