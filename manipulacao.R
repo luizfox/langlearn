@@ -34,9 +34,10 @@ lista = lapply (lista, lubridate::seconds)
 lista = lapply(lista[[1]], localizarIntervalo)
 
 inserirParametros <- function (tempoInicial, tempoFinal, arquivoDestino){
-  sprintf("\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s.%s", 
+  sprintf("\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s", 
           ffmpeg, arquivoOrigem, tempoInicial, ifelse(tempoFinal <= 2, 2, tempoFinal), 
-          substr(arquivoDestino, 1, nchar(arquivoOrigem) -4), extensao)
+          arquivoDestino)
+          #substr(arquivoDestino, 1, nchar(arquivoOrigem) -4), extensao)
   #alternativas pra MKV:
   #ffmpeg -i output3.mkv -t 00:04:20 -c:v copy -c:a copy output-cut.mkv
   #ffmpeg -i output3.mkv -t 00:04:20 -c:v libx264 -c:a libfaac output-cut.mkv (sync prob)
@@ -74,4 +75,3 @@ for (i in 1:length(lista)){
 }
 write.table(listaAnki[-1,], paste0( diretorioSaida ,"listaAnki.txt"), sep="\t", quote=F, 
             col.names=F, row.names=F, fileEncoding="UTF-8")
-#wget -q -U Mozilla -O output.mp3 "http://translate.google.com/translate_tts?ie=UTF-8&tl=en&q=hello world, I'm here to tell you some news"
