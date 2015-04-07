@@ -3,13 +3,13 @@ library(lubridate)
 # VARIAVEIS A SEREM ALTERADAS DE ACORDO COM O AMBIENTE
 ###########################################################
 ffmpeg = "J:/downloads/legendas/ffmpeg-20150402-git-d759844-win64-static/bin/ffmpeg.exe"
-arquivoOrigem = "e:/S02E07 A Man Without Honor.mp4"
-diretorioSaida = "e:/"
-pastaLegendaELista = "C:/Users/hu/Dropbox/diversos/legendas/GoT/"
+arquivoOrigem = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem/Mommy 2014 1080p BluRay x264 French AAC - Ozlem.mp4"
+diretorioSaida = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem/build 1"
+pastaLegendaELista = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem"
 #pastaLegendaELista = "J:/dropbox/Dropbox/diversos/legendas/GoT"
-arquivoLegenda = "Game.of.Thrones.S02E07.720p.BluRay.x264.MIKY.Everything.ass"
-modoDev = T
-audioOnly = T
+arquivoLegenda = "mommy.unidas.ass"
+modoDev = F
+audioOnly = F
 ###########################################################
 
 extensao = ifelse(audioOnly, "mp3",
@@ -38,9 +38,9 @@ lista = lapply(lista[[1]], localizarIntervalo)
 
 inserirParametros <- function (tempoInicial, tempoFinal, arquivoDestino){
   if (audioOnly)
-    strffmpeg = "\"%s\" -i \"%s\" -ab 320k -ac 2 -ar 44100 -vn -ss %s -t %f %s"
+    strffmpeg = "\"%s\" -i \"%s\" -ab 320k -ac 2 -ar 44100 -vn -ss %s -t %f \"%s\""
   else
-    strffmpeg = "\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f %s"
+    strffmpeg = "\"%s\" -i \"%s\" -vcodec copy -acodec copy -ss %s -t %f \"%s\""
   sprintf(strffmpeg,
           ffmpeg, arquivoOrigem, tempoInicial, ifelse(tempoFinal <= 2, 2, tempoFinal), 
           arquivoDestino)
@@ -72,7 +72,7 @@ for (i in 1:length(lista)){
   if (nrow(lista[[i]]) == 0) next;
   x = lista[[i]]
   arquivoSaida = sprintf ("saida-%i.%s", i, extensao)
-  saida = sprintf ("%s%s", diretorioSaida, arquivoSaida)
+  saida = sprintf ("%s/%s", diretorioSaida, arquivoSaida)
   campoAnkiArquivo = sprintf("[sound:%s]", arquivoSaida)
   if (modoDev)
     print(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
@@ -85,5 +85,5 @@ for (i in 1:length(lista)){
     linha = c(as.character(x$V10[x$V4 == "Bot"]), as.character(x$V10[x$V4 == "Top"]), campoAnkiArquivo)
   listaAnki = rbind (listaAnki, linha)
 }
-write.table(listaAnki[-1,], paste0( diretorioSaida ,"listaAnki.txt"), sep="\t", quote=F, 
+write.table(listaAnki[-1,], paste0( diretorioSaida ,"/listaAnki.txt"), sep="\t", quote=F, 
             col.names=F, row.names=F, fileEncoding="UTF-8")
