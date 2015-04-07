@@ -8,7 +8,7 @@ diretorioSaida = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem/buil
 pastaLegendaELista = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem"
 #pastaLegendaELista = "J:/dropbox/Dropbox/diversos/legendas/GoT"
 arquivoLegenda = "mommy.unidas.ass"
-modoDev = F
+modoDev = T
 audioOnly = F
 ###########################################################
 
@@ -16,12 +16,13 @@ extensao = ifelse(audioOnly, "mp3",
                 substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem)))
 setwd(pastaLegendaELista)
 legenda = read.fwf (arquivoLegenda,
-                    widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18)
+                    widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18, fileEncoding="latin1")
 
-#head(legenda)
+head(legenda$V10)
 legenda$V11 = substr(legenda$V2, 1,11); legenda$V12 = substr(legenda$V3, 1,11); 
 legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
 legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
+legenda$V10 = iconv(legenda$V10, from = "UTF-8", to="latin1")
 legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
 legenda$V10 = gsub("\n"," ",legenda$V10); legenda$V10 = gsub("\\N"," ",legenda$V10)
 legenda$V10 = gsub("\\\\","",legenda$V10)
