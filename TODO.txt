@@ -1,3 +1,4 @@
+verificar porque a saida8 (por exemplo) está saindo o mesmo texto no original e tradução
 diretorios por parametro (ou salvar a lista dos ultimos arquivos usados na pasta home)
 batch pra unir tudo isso
 testes com mkv
