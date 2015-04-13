@@ -1,3 +1,4 @@
-diretorios por parametro
+diretorios por parametro (ou salvar a lista dos ultimos arquivos usados na pasta home)
 batch pra unir tudo isso
 testes com mkv
+fazer com que o limite do intervalo seja o texto da ultima legenda

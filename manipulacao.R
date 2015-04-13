@@ -1,20 +1,20 @@
 library(lubridate)
+library (rChoiceDialogs)
 ###########################################################
 # VARIAVEIS A SEREM ALTERADAS DE ACORDO COM O AMBIENTE
 ###########################################################
 ffmpeg = "J:/downloads/legendas/ffmpeg-20150402-git-d759844-win64-static/bin/ffmpeg.exe"
-arquivoOrigem = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem/Mommy 2014 1080p BluRay x264 French AAC - Ozlem.mp4"
-diretorioSaida = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem/build 1"
-pastaLegendaELista = "E:/Filmes/Mommy 2014 1080p BluRay x264 French AAC - Ozlem"
-#pastaLegendaELista = "J:/dropbox/Dropbox/diversos/legendas/GoT"
-arquivoLegenda = "mommy.unidas.ass"
 modoDev = T
 audioOnly = F
 ###########################################################
+diretorioSaida = jchoose.dir(default = getwd(), caption = "Diretorio de saida", modal = canUseJavaModal())
+setwd(diretorioSaida)
+arquivoLista = jchoose.files(multi = F, caption = "Arquivo lista.txt")
+arquivoOrigem = jchoose.files(multi = F, caption = "Arquivo de origem (filme)")
+arquivoLegenda = jchoose.files(multi = F, caption = "Arquivo de legenda combinado")
 
 extensao = ifelse(audioOnly, "mp3",
                 substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem)))
-setwd(pastaLegendaELista)
 legenda = read.fwf (arquivoLegenda,
                     widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18, fileEncoding="latin1")
 
@@ -27,13 +27,20 @@ legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
 legenda$V10 = gsub("\n"," ",legenda$V10); legenda$V10 = gsub("\\N"," ",legenda$V10)
 legenda$V10 = gsub("\\\\","",legenda$V10)
 
-
-localizarIntervalo <- function (tempo) {
+# Para ajudar a abstrair a mudança:
+#======= =========
+#===============
+localizarIntervalo <- function (tempo, indice = NA) {
+  colunas = c(2,3,4,10,11,12)
   if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
-  legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo),c(2,3,4,10,11,12)]
+  retorno = legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo), colunas]
+  
+  if (!is.na(indice))
+    retorno = retorno[retorno$V4 == indice,]
+  return (retorno)
 }
 
-lista = read.table("lista.txt", header = F) # arquivo que cont?m os pontos marcados pelo VLC
+lista = read.table(arquivoLista, header = F) # arquivo que cont?m os pontos marcados pelo VLC
 lista = lapply (lista, lubridate::seconds)
 lista = lapply(lista[[1]], localizarIntervalo)
 
