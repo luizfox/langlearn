@@ -3,3 +3,4 @@ verificar porque a saida8 (por exemplo) está saindo o mesmo texto no original e 
 batch pra unir tudo isso
 testes com mkv
 [A TESTAR]fazer com que o limite do intervalo seja o texto da ultima legenda
+criar um pacote, pra resolver o problema de não ter como descobrir o diretorio do script atual
