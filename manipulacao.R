@@ -23,11 +23,12 @@ legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
 legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
 legenda$V10 = iconv(legenda$V10, to = "UTF-8", from="latin1")
 legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
-legenda$V10 = gsub("\n"," ",legenda$V10); legenda$V10 = gsub("\\N"," ",legenda$V10)
-legenda$V10 = gsub("\\\\","",legenda$V10)
+legenda$V10 = gsub("\n"," ",legenda$V10); 
+legenda$V10 = gsub("[?]\\N"," ",legenda$V10)
+legenda$V10 = gsub("\\\\N"," ",legenda$V10)
 
 # Para ajudar a abstrair a mudança:
-#=======  =========
+#  =======  =========
 # ===============
 # o maior eh de quem?
 # pega o maior e chama pro menor, pra ver se tem algum texto diferente do que jah tem 
@@ -37,18 +38,39 @@ localizarIntervalo <- function (tempo) {
   if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
   
   retorno = legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo), colunas]
+  if (nrow (retorno) == 1){ #tentar aumentar o tamanho - no inicio ou no fim? média do inicio com o fim?
+    options(lubridate.verbose = FALSE)
+    media = (as.duration(retorno$V2)/eseconds(1) + as.duration(retorno$V3)/eseconds(1)) / 2
+    if (as.duration(tempo) != media) 
+      retorno = localizarIntervalo(media)
+    options(lubridate.verbose = TRUE)
+  }
   
-  #possivelmente unir a legenda seguinte SE uma ficar muito menor que outra
+  #possivelmente unir a legenda seguinte menor SE uma ficar muito menor que outra
   menor = ifelse (localizarMaior(retorno) == "Bot", "Top", "Bot")
   maior = ifelse (localizarMaior(retorno) == "Top", "Top", "Bot")
   tempoDoMaior = retorno[retorno$V4 == maior,2]
   linha = localizarIntervaloSimples(tempoDoMaior, menor)
   x = linha$V10
   if (length(x) > 0  )
-    if (linha$V10 != retorno[retorno$V4 == menor,4]){
+    if (linha$V10 != (retorno[(retorno$V4 == menor),4])){
       # no tempo final da maior, no texto da menor, tem um texto diferente do atual da menor
       retorno[retorno$V4 == menor,4] = paste(retorno[retorno$V4 == menor,4], linha$V10)
     }
+  
+  #repetir o processo anterior soh q no inicio do ao invés do final
+  menor = ifelse (localizarInicioMenor(retorno) == "Top", "Top", "Bot")
+  maior = ifelse (localizarInicioMenor(retorno) == "Bot", "Top", "Bot")
+  tempoDoMenor = retorno[retorno$V4 == menor,1]
+  linha = localizarIntervaloSimples(tempoDoMenor, maior)
+  x = linha$V10
+  if (length(x) > 0  )
+    if (linha$V10 != retorno[retorno$V4 == maior,4]){
+      # no tempo final da maior, no texto da menor, tem um texto diferente do atual da menor
+      retorno[retorno$V4 == maior,4] = paste(linha$V10, retorno[retorno$V4 == maior,4])
+
+    }
+  
   return (retorno)
 }
 
@@ -63,6 +85,19 @@ localizarIntervaloSimples <- function (tempo, indice){
 #top ou bot?
 localizarMaior <- function (registro){
   return (ifelse( horaFinalMaior (registro) == registro[registro$V4 == "Bot",6], "Bot", "Top"))
+}
+
+#top ou bot?
+localizarInicioMenor <- function (registro){
+  return (ifelse( horaInicialMenor (registro) == registro[registro$V4 == "Bot",5], "Bot", "Top"))
+}
+
+horaInicialMenor <- function(itemLista){
+  if (nrow(itemLista) == 1)
+    return (itemLista$V12)
+  else
+    return(ifelse (itemLista$V2[1] > itemLista$V2[2], itemLista$V11[2], 
+                   itemLista$V11[1] ))
 }
 
 horaFinalMaior <- function(itemLista){
