@@ -5,14 +5,13 @@ library (rChoiceDialogs)
 ###########################################################
 ffmpeg = "J:/downloads/legendas/ffmpeg-20150402-git-d759844-win64-static/bin/ffmpeg.exe"
 modoDev = T
-audioOnly = F
+audioOnly = T
 ###########################################################
-diretorioSaida = jchoose.dir(default = getwd(), caption = "Diretorio de saida", modal = canUseJavaModal())
+diretorioSaida = jchoose.dir(default = carregarDir("diretorioSaida"), caption = "Diretorio de saida", modal = canUseJavaModal())
+arquivoLista = jchoose.files(multi = F, caption = "Arquivo lista.txt", default = carregarDir("arquivoLista"))
+arquivoOrigem = jchoose.files(multi = F, caption = "Arquivo de origem (filme)", default = carregarDir("arquivoOrigem"))
+arquivoLegenda = jchoose.files(multi = F, caption = "Arquivo de legenda combinado", default = carregarDir("arquivoLegenda"))
 setwd(diretorioSaida)
-arquivoLista = jchoose.files(multi = F, caption = "Arquivo lista.txt")
-arquivoOrigem = jchoose.files(multi = F, caption = "Arquivo de origem (filme)")
-arquivoLegenda = jchoose.files(multi = F, caption = "Arquivo de legenda combinado")
-
 extensao = ifelse(audioOnly, "mp3",
                 substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem)))
 legenda = read.fwf (arquivoLegenda,
@@ -22,23 +21,58 @@ head(legenda$V10)
 legenda$V11 = substr(legenda$V2, 1,11); legenda$V12 = substr(legenda$V3, 1,11); 
 legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
 legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
-legenda$V10 = iconv(legenda$V10, from = "UTF-8", to="latin1")
+legenda$V10 = iconv(legenda$V10, to = "UTF-8", from="latin1")
 legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
 legenda$V10 = gsub("\n"," ",legenda$V10); legenda$V10 = gsub("\\N"," ",legenda$V10)
 legenda$V10 = gsub("\\\\","",legenda$V10)
 
 # Para ajudar a abstrair a mudança:
-#======= =========
-#===============
-localizarIntervalo <- function (tempo, indice = NA) {
+#=======  =========
+# ===============
+# o maior eh de quem?
+# pega o maior e chama pro menor, pra ver se tem algum texto diferente do que jah tem 
+# se tiver, concatena e devolve
+localizarIntervalo <- function (tempo) {
+  colunas = c(2,3,4,10,11,12)
+  if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
+  
+  retorno = legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo), colunas]
+  
+  #possivelmente unir a legenda seguinte SE uma ficar muito menor que outra
+  menor = ifelse (localizarMaior(retorno) == "Bot", "Top", "Bot")
+  maior = ifelse (localizarMaior(retorno) == "Top", "Top", "Bot")
+  tempoDoMaior = retorno[retorno$V4 == maior,2]
+  linha = localizarIntervaloSimples(tempoDoMaior, menor)
+  x = linha$V10
+  if (length(x) > 0  )
+    if (linha$V10 != retorno[retorno$V4 == menor,4]){
+      # no tempo final da maior, no texto da menor, tem um texto diferente do atual da menor
+      retorno[retorno$V4 == menor,4] = paste(retorno[retorno$V4 == menor,4], linha$V10)
+    }
+  return (retorno)
+}
+
+localizarIntervaloSimples <- function (tempo, indice){
   colunas = c(2,3,4,10,11,12)
   if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
   retorno = legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo), colunas]
-  
-  if (!is.na(indice))
-    retorno = retorno[retorno$V4 == indice,]
+  retorno = retorno[retorno$V4 == indice,]  
   return (retorno)
 }
+
+#top ou bot?
+localizarMaior <- function (registro){
+  return (ifelse( horaFinalMaior (registro) == registro[registro$V4 == "Bot",6], "Bot", "Top"))
+}
+
+horaFinalMaior <- function(itemLista){
+  if (nrow(itemLista) == 1)
+    return (itemLista$V12)
+  else
+    return(ifelse (itemLista$V3[1] > itemLista$V3[2], itemLista$V12[1], 
+                   itemLista$V12[2] ))
+}
+# lista[[29]]$V2[2] = 1976.282125
 
 lista = read.table(arquivoLista, header = F) # arquivo que cont?m os pontos marcados pelo VLC
 lista = lapply (lista, lubridate::seconds)
@@ -93,5 +127,7 @@ for (i in 1:length(lista)){
     linha = c(as.character(x$V10[x$V4 == "Bot"]), as.character(x$V10[x$V4 == "Top"]), campoAnkiArquivo)
   listaAnki = rbind (listaAnki, linha)
 }
-write.table(listaAnki[-1,], paste0( diretorioSaida ,"/listaAnki.txt"), sep="\t", quote=F, 
+setwd(diretorioSaida)
+write.table(listaAnki[-1,], "listaAnki.txt", sep="\t", quote=F, 
             col.names=F, row.names=F, fileEncoding="UTF-8")
+salvarPastasPassadas()
