@@ -5,7 +5,8 @@ Version: 1.0
 Date: 2015-04-16
 Author: Luiz Felipe
 Maintainer: Luiz Felipe <luizfox@yahoo.com>
-Description: lazy to write
-License: GPL 3.0
+Description: too lazy to write
+Depends: rChoiceDialogs, lubridate
+License: GPL-3.0
 Collate:
     'manipulacao.R'
