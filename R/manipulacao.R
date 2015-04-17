@@ -3,31 +3,32 @@ library (rChoiceDialogs)
 ###########################################################
 # VARIAVEIS A SEREM ALTERADAS DE ACORDO COM O AMBIENTE
 ###########################################################
-ffmpeg = "J:/downloads/legendas/ffmpeg-20150402-git-d759844-win64-static/bin/ffmpeg.exe"
-modoDev = T
-audioOnly = T
-###########################################################
-diretorioSaida = jchoose.dir(default = carregarDir("diretorioSaida"), caption = "Diretorio de saida", modal = canUseJavaModal())
-arquivoLista = jchoose.files(multi = F, caption = "Arquivo lista.txt", default = carregarDir("arquivoLista"))
-arquivoOrigem = jchoose.files(multi = F, caption = "Arquivo de origem (filme)", default = carregarDir("arquivoOrigem"))
-arquivoLegenda = jchoose.files(multi = F, caption = "Arquivo de legenda combinado", default = carregarDir("arquivoLegenda"))
-setwd(diretorioSaida)
-extensao = ifelse(audioOnly, "mp3",
-                substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem)))
-legenda = read.fwf (arquivoLegenda,
-                    widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18, fileEncoding="latin1")
+# source("preferencias.R")
+carregarPrefs <- function (){
+  ###########################################################
+  ffmpeg <<- jchoose.files(default = carregarDir("ffmpeg"), caption = "Localizacao do ffmpeg")
+  diretorioSaida <<- jchoose.dir(default = carregarDir("diretorioSaida"), caption = "Diretorio de saida")
+  arquivoLista <<- jchoose.files(multi = F, caption = "Arquivo lista.txt", default = carregarDir("arquivoLista"))
+  arquivoOrigem <<- jchoose.files(multi = F, caption = "Arquivo de origem (filme)", default = carregarDir("arquivoOrigem"))
+  arquivoLegenda <<- jchoose.files(multi = F, caption = "Arquivo de legenda combinado", default = carregarDir("arquivoLegenda"))
+  setwd(diretorioSaida)
+}
 
-head(legenda$V10)
-legenda$V11 = substr(legenda$V2, 1,11); legenda$V12 = substr(legenda$V3, 1,11); 
-legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
-legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
-legenda$V10 = iconv(legenda$V10, to = "UTF-8", from="latin1")
-legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
-legenda$V10 = gsub("\n"," ",legenda$V10); 
-legenda$V10 = gsub("[?]\\N"," ",legenda$V10)
-legenda$V10 = gsub("\\\\N"," ",legenda$V10)
-
-# Para ajudar a abstrair a mudança:
+carregarLegenda <- function (){
+  legenda <- read.fwf (arquivoLegenda,
+                      widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18, fileEncoding="latin1")
+  #head(legenda$V10)
+  legenda$V11 <- substr(legenda$V2, 1,11); legenda$V12 <- substr(legenda$V3, 1,11); 
+  legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
+  legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
+  legenda$V10 = iconv(legenda$V10, to = "UTF-8", from="latin1")
+  legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
+  legenda$V10 = gsub("\n"," ",legenda$V10); 
+  legenda$V10 = gsub("[?]\\N"," ",legenda$V10)
+  legenda$V10 = gsub("\\\\N"," ",legenda$V10)
+  return (legenda)
+}
+# Para ajudar a abstrair a mudan?a:
 #  =======  =========
 # ===============
 # o maior eh de quem?
@@ -38,7 +39,7 @@ localizarIntervalo <- function (tempo) {
   if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
   
   retorno = legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo), colunas]
-  if (nrow (retorno) == 1){ #tentar aumentar o tamanho - no inicio ou no fim? média do inicio com o fim?
+  if (nrow (retorno) == 1){ #tentar aumentar o tamanho - no inicio ou no fim? m?dia do inicio com o fim?
     options(lubridate.verbose = FALSE)
     media = (as.duration(retorno$V2)/eseconds(1) + as.duration(retorno$V3)/eseconds(1)) / 2
     if (as.duration(tempo) != media) 
@@ -58,7 +59,7 @@ localizarIntervalo <- function (tempo) {
       retorno[retorno$V4 == menor,4] = paste(retorno[retorno$V4 == menor,4], linha$V10)
     }
   
-  #repetir o processo anterior soh q no inicio do ao invés do final
+  #repetir o processo anterior soh q no inicio do ao inv?s do final
   menor = ifelse (localizarInicioMenor(retorno) == "Top", "Top", "Bot")
   maior = ifelse (localizarInicioMenor(retorno) == "Bot", "Top", "Bot")
   tempoDoMenor = retorno[retorno$V4 == menor,1]
@@ -109,9 +110,12 @@ horaFinalMaior <- function(itemLista){
 }
 # lista[[29]]$V2[2] = 1976.282125
 
-lista = read.table(arquivoLista, header = F) # arquivo que cont?m os pontos marcados pelo VLC
-lista = lapply (lista, lubridate::seconds)
-lista = lapply(lista[[1]], localizarIntervalo)
+carregarLista <- function (){
+  lista <- read.table(arquivoLista, header = F) # arquivo que cont?m os pontos marcados pelo VLC
+  lista = lapply (lista, lubridate::seconds)
+  lista = lapply(lista[[1]], localizarIntervalo)
+  return (lista)
+}
 
 inserirParametros <- function (tempoInicial, tempoFinal, arquivoDestino){
   if (audioOnly)
@@ -144,25 +148,68 @@ tempoAAdicionar <- function(itemLista){
   }
 }
 
-listaAnki = matrix(ncol = 3)
-for (i in 1:length(lista)){
-  if (nrow(lista[[i]]) == 0) next;
-  x = lista[[i]]
-  arquivoSaida = sprintf ("saida-%i.%s", i, extensao)
-  saida = sprintf ("%s/%s", diretorioSaida, arquivoSaida)
-  campoAnkiArquivo = sprintf("[sound:%s]", arquivoSaida)
-  if (modoDev)
-    print(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
-  else
-    system(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
-  
-  if (nrow(lista[[i]]) == 1) 
-    linha = c(as.character(x$V10), as.character(x$V10), campoAnkiArquivo)
-  else
-    linha = c(as.character(x$V10[x$V4 == "Bot"]), as.character(x$V10[x$V4 == "Top"]), campoAnkiArquivo)
-  listaAnki = rbind (listaAnki, linha)
+loadInicial <- function (){
+  carregarPrefs()
+  legenda <<- carregarLegenda()
+  lista <<- carregarLista()
 }
-setwd(diretorioSaida)
-write.table(listaAnki[-1,], "listaAnki.txt", sep="\t", quote=F, 
-            col.names=F, row.names=F, fileEncoding="UTF-8")
-salvarPastasPassadas()
+
+gerarMaterial <- function (audioOnly =T, modoDev = F){
+  loadInicial()
+  audioOnly <<- audioOnly
+  extensao = ifelse(audioOnly, "mp3",
+                    substr(arquivoOrigem, nchar(arquivoOrigem) -2, nchar(arquivoOrigem)))
+  listaAnki = matrix(ncol = 3)
+  for (i in 1:length(lista)){
+    if (nrow(lista[[i]]) == 0) next;
+    x = lista[[i]]
+    arquivoSaida = sprintf ("saida-%i.%s", i, extensao)
+    saida = sprintf ("%s/%s", diretorioSaida, arquivoSaida)
+    campoAnkiArquivo = sprintf("[sound:%s]", arquivoSaida)
+    if (modoDev)
+      print(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
+    else
+      system(inserirParametros(horaInicialMenor(x), tempoAAdicionar(x), saida))
+    
+    if (nrow(lista[[i]]) == 1) 
+      linha = c(as.character(x$V10), as.character(x$V10), campoAnkiArquivo)
+    else
+      linha = c(as.character(x$V10[x$V4 == "Bot"]), as.character(x$V10[x$V4 == "Top"]), campoAnkiArquivo)
+    listaAnki = rbind (listaAnki, linha)
+  }
+  setwd(diretorioSaida)
+  write.table(listaAnki[-1,], "listaAnki.txt", sep="\t", quote=F, 
+              col.names=F, row.names=F, fileEncoding="UTF-8")
+  salvarPastasPassadas()
+}
+
+# DO ARQUIVO PREFERENCIAS
+mudarPasta <- function (){
+  mainDir <- "~/"
+  subdir <- "langlearn/"
+  setwd(mainDir)
+  if (file.exists(subdir)){
+    setwd(subdir)
+  }else {
+    dir.create(file.path(mainDir, subdir), showWarnings = FALSE)
+    setwd(file.path(mainDir, subdir))
+  }
+  #showWarnings = TRUE
+}
+
+salvarPastasPassadas <- function()  {
+  mudarPasta()
+  write.table (diretorioSaida, "diretorioSaida.csv", row.names = F, col.names =F)
+  write.table (arquivoLista, "arquivoLista.csv", row.names = F, col.names =F)
+  write.table (arquivoOrigem, "arquivoOrigem.csv", row.names = F, col.names =F)
+  write.table (arquivoLegenda, "arquivoLegenda.csv", row.names = F, col.names =F)
+  write.table (ffmpeg, "ffmpeg.csv", row.names = F, col.names =F)
+}
+
+carregarDir <- function (variavel){
+  mudarPasta()
+  retorno = ""
+  if (file.exists(paste0(variavel, ".csv")))
+    retorno = read.table(paste0(variavel, ".csv"), row.names = NULL, stringsAsFactors = F)$V1
+  return (retorno)
+}
