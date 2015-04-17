@@ -1,6 +1,7 @@
-[OK] verificar porque a saida8 (por exemplo) est· saindo o mesmo texto no original e traduÁ„o
+[OK] verificar porque a saida8 (por exemplo) est√° saindo o mesmo texto no original e tradu√ß√£o
 [OK] diretorios por parametro (ou salvar a lista dos ultimos arquivos usados na pasta home)
 batch pra unir tudo isso
 testes com mkv
 [OK] fazer com que o limite do intervalo seja o texto da ultima legenda
-criar um pacote, pra resolver o problema de n„o ter como descobrir o diretorio do script atual
+[OK] criar um pacote, pra resolver o problema de n√£o ter como descobrir o diretorio do script atual
+fazer com que as bibliotecas dependentes carreguem ao iniciar o pacote
