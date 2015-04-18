@@ -153,7 +153,14 @@ loadInicial <- function (){
   legenda <<- carregarLegenda()
   lista <<- carregarLista()
 }
-
+#' Gera o meterial
+#'
+#' @param audioOnly = T boolean
+#' @param modoDev = F boolean
+#' @return Material gerado
+#' @examples
+#' gerarMaterial(T, T)
+#' gerarMaterial(T, F)
 gerarMaterial <- function (audioOnly =T, modoDev = F){
   loadInicial()
   audioOnly <<- audioOnly

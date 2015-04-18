@@ -15,5 +15,5 @@ LaTeX: pdfLaTeX
 BuildType: Package
 PackageUseDevtools: Yes
 PackageInstallArgs: --no-multiarch --with-keep.source
-PackageBuildArgs: --no-manual --no-build-vignettes
-PackageCheckArgs: --no-manual --no-vignettes
+PackageBuildArgs: --no-build-vignettes
+PackageCheckArgs: --no-vignettes
