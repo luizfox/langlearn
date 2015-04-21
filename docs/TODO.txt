@@ -1,7 +1,7 @@
 ﻿[OK] verificar porque a saida8 (por exemplo) está saindo o mesmo texto no original e tradução
 [OK] diretorios por parametro (ou salvar a lista dos ultimos arquivos usados na pasta home)
-batch pra unir tudo isso
-testes com mkv
+batch pra unir tudo
+[OK] testes com mkv
 [OK] fazer com que o limite do intervalo seja o texto da ultima legenda
 [OK] criar um pacote, pra resolver o problema de não ter como descobrir o diretorio do script atual
 [OK] fazer com que as bibliotecas dependentes carreguem ao iniciar o pacote
