@@ -15,14 +15,26 @@ carregarPrefs <- function (){
 }
 
 carregarLegenda <- function (){
-  legenda <- read.fwf (arquivoLegenda,
-                      widths= c(12, 12, 12, 3, 2, 4, 4, 4,1,1000), skip=18, fileEncoding="latin1")
-  #head(legenda$V10)
+  legenda <- read.fwf (arquivoLegenda, #3, 5, 12
+                      widths= c(12, 10, 1, 10, 1, 3, 2, 4, 4, 4,1, 3, 1000), skip=18
+  ,col.names = c('V1', 'V2', 'NADA', 'V3',  'NADA2', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'NADA3', 'V10')
+  #                    , fileEncoding="latin1"
+                      )
+  #head(legenda)
+  #legenda$V3 = legenda$V4
+  #legenda$V4 = NULL
+  #legenda$V10= legenda$V13
+  #legenda$V13= NULL
+  #legenda$V5= NULL
+  legenda$NADA = NULL
+  legenda$NADA2 = NULL
+  legenda$NADA3 = NULL
+  
   legenda$V11 <- substr(legenda$V2, 1,11); legenda$V12 <- substr(legenda$V3, 1,11); 
   legenda$V2 = lubridate::hms(substr(legenda$V2, 1,11))
   legenda$V3 = lubridate::hms(substr(legenda$V3, 1,11))
   legenda$V10 = iconv(legenda$V10, to = "UTF-8", from="latin1")
-  legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
+  #legenda$V10 = substr(legenda$V10, 4,length(legenda$V10))
   legenda$V10 = gsub("\n"," ",legenda$V10); 
   legenda$V10 = gsub("[?]\\N"," ",legenda$V10)
   legenda$V10 = gsub("\\\\N"," ",legenda$V10)
@@ -35,14 +47,17 @@ carregarLegenda <- function (){
 # pega o maior e chama pro menor, pra ver se tem algum texto diferente do que jah tem 
 # se tiver, concatena e devolve
 localizarIntervalo <- function (tempo) {
-  colunas = c(2,3,4,10,11,12)
+  tempoCopia = tempo
+  #colunas = c(2,3,4,8,9,10) ESSE ERA O ORIGINAL - MUDADO DPS DA MUDANCA DE LEIAUTE DO ARQUIVO
+  colunas = c(2,3,4,10, 11, 12)
   if (class(tempo) == "numeric") tempo = lubridate::seconds(tempo)
   
   retorno = legenda[(legenda$V2 <= tempo) & (legenda$V3 >= tempo), colunas]
   if (nrow (retorno) == 1){ #tentar aumentar o tamanho - no inicio ou no fim? m?dia do inicio com o fim?
     options(lubridate.verbose = FALSE)
-    media = (as.duration(retorno$V2)/eseconds(1) + as.duration(retorno$V3)/eseconds(1)) / 2
-    if (as.duration(tempo) != media) 
+    media = ( as.duration(retorno$V2)/dseconds(1) + as.duration(retorno$V3)/dseconds(1) ) / 2
+    #media = as.duration(media) #adicionado leiaute
+    if (as.duration(round(tempo)) != as.duration(round(media))) # adicionado aqui o segundo as duration (leiaute)
       retorno = localizarIntervalo(media)
     options(lubridate.verbose = TRUE)
   }
@@ -53,7 +68,7 @@ localizarIntervalo <- function (tempo) {
   tempoDoMaior = retorno[retorno$V4 == maior,2]
   linha = localizarIntervaloSimples(tempoDoMaior, menor)
   x = linha$V10
-  if (length(x) > 0  )
+  if (length(x) > 0  & length(retorno[(retorno$V4 == menor),4]) > 0)
     if (linha$V10 != (retorno[(retorno$V4 == menor),4])){
       # no tempo final da maior, no texto da menor, tem um texto diferente do atual da menor
       retorno[retorno$V4 == menor,4] = paste(retorno[retorno$V4 == menor,4], linha$V10)
@@ -65,7 +80,7 @@ localizarIntervalo <- function (tempo) {
   tempoDoMenor = retorno[retorno$V4 == menor,1]
   linha = localizarIntervaloSimples(tempoDoMenor, maior)
   x = linha$V10
-  if (length(x) > 0  )
+  if (length(x) > 0  & length(retorno[retorno$V4 == maior,4]) > 0)
     if (linha$V10 != retorno[retorno$V4 == maior,4]){
       # no tempo final da maior, no texto da menor, tem um texto diferente do atual da menor
       retorno[retorno$V4 == maior,4] = paste(linha$V10, retorno[retorno$V4 == maior,4])
@@ -85,6 +100,7 @@ localizarIntervaloSimples <- function (tempo, indice){
 
 #top ou bot?
 localizarMaior <- function (registro){
+  
   return (ifelse( horaFinalMaior (registro) == registro[registro$V4 == "Bot",6], "Bot", "Top"))
 }
 
